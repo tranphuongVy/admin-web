@@ -1,0 +1,145 @@
+/* ================= Backdrop ================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+/* ================= Modal ================= */
+.modal {
+  width: 680px; /* TO HƠN */
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 32px;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+  animation: scaleIn 0.25s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: translateY(8px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ================= Header ================= */
+.modal-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.email {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ================= Info Grid ================= */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 28px;
+  margin-bottom: 26px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ================= Status Badge ================= */
+.status-active,
+.status-banned {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.status-active {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.status-banned {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+/* ================= Bio ================= */
+.bio {
+  margin-bottom: 28px;
+}
+
+.bio label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.bio p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #374151;
+  background: #f9fafb;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+/* ================= Actions ================= */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e7eb;
+}
