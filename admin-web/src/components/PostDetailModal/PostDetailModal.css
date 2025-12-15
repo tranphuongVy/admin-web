@@ -1,0 +1,134 @@
+/* ===== BACKDROP ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ===== MODAL ===== */
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.modal.large {
+  width: 700px;
+}
+
+/* ===== HEADER ===== */
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+/* ===== POST INFO ===== */
+.post-info {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.post-info strong {
+  font-size: 15px;
+}
+
+.privacy {
+  font-size: 12px;
+  color: #666;
+  background: #f2f2f2;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.post-info .text {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.time {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ===== COMMENTS ===== */
+.comments {
+  padding: 16px 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.comments h4 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.empty {
+  color: #999;
+  font-style: italic;
+}
+
+/* ===== COMMENT ITEM ===== */
+.comment {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.comment-header strong {
+  font-size: 14px;
+}
+
+.comment-time {
+  font-size: 11px;
+  color: #888;
+}
+
+.comment-content {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+/* ===== PAGINATION ===== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* ===== ACTIONS ===== */
+.actions {
+  padding: 12px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

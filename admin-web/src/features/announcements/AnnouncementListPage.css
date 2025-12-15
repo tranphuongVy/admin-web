@@ -1,0 +1,44 @@
+.announcement-page {
+  padding: 24px 28px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.announcement-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.announcement-page-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #111827;
+}
+
+.announcement-page-header p {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* List */
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Empty state */
+.announcement-empty {
+  border: 1px dashed #d1d5db;
+  border-radius: 14px;
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
