@@ -1,34 +1,40 @@
 import axiosAdmin from "./axiosAdmin";
+import type { User } from "../types/user";
 
-/**
- * ADMIN API
- * Map 1–1 với AdminController (backend)
- */
+/* ================= TYPES ================= */
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/* ================= ADMIN API ================= */
+
 export const adminApi = {
   /* ==========================
    * USERS
    * ========================== */
 
-  // GET /api/admin/users
-  listUsers(params: {
+  async listUsers(params: {
     page?: number;
     limit?: number;
     search?: string;
-  }) {
-    return axiosAdmin.get("/admin/users", { params });
+    status?: "ACTIVE" | "BANNED";
+  }): Promise<PaginatedResponse<User>> {
+    const res = await axiosAdmin.get("/admin/users", { params });
+    return res.data.data;
   },
 
-  // PATCH /api/admin/users/:id/ban
   banUser(userId: string) {
     return axiosAdmin.patch(`/admin/users/${userId}/ban`);
   },
 
-  // PATCH /api/admin/users/:id/unban
   unbanUser(userId: string) {
     return axiosAdmin.patch(`/admin/users/${userId}/unban`);
   },
 
-  // POST /api/admin/users/:id/reset-password
   resetUserPassword(userId: string, newPassword: string) {
     return axiosAdmin.post(`/admin/users/${userId}/reset-password`, {
       newPassword,
@@ -39,26 +45,23 @@ export const adminApi = {
    * POSTS
    * ========================== */
 
-  // GET /api/admin/posts
-  listPosts(params: {
+  async listPosts(params: {
     page?: number;
     limit?: number;
     search?: string;
   }) {
-    return axiosAdmin.get("/admin/posts", { params });
+    const res = await axiosAdmin.get("/admin/posts", { params });
+    return res.data.data;
   },
 
-  // PATCH /api/admin/posts/:id/hide
   hidePost(postId: string) {
     return axiosAdmin.patch(`/admin/posts/${postId}/hide`);
   },
 
-  // PATCH /api/admin/posts/:id/unhide
   unhidePost(postId: string) {
     return axiosAdmin.patch(`/admin/posts/${postId}/unhide`);
   },
 
-  // DELETE /api/admin/posts/:id
   deletePost(postId: string) {
     return axiosAdmin.delete(`/admin/posts/${postId}`);
   },
@@ -67,21 +70,19 @@ export const adminApi = {
    * COMMENTS
    * ========================== */
 
-  // GET /api/admin/comments
-  listComments(params: {
+  async listComments(params: {
     page?: number;
     limit?: number;
     postId?: string;
   }) {
-    return axiosAdmin.get("/admin/comments", { params });
+    const res = await axiosAdmin.get("/admin/comments", { params });
+    return res.data.data;
   },
 
-  // PATCH /api/admin/comments/:id/hide
   hideComment(commentId: string) {
     return axiosAdmin.patch(`/admin/comments/${commentId}/hide`);
   },
 
-  // DELETE /api/admin/comments/:id
   deleteComment(commentId: string) {
     return axiosAdmin.delete(`/admin/comments/${commentId}`);
   },
@@ -90,7 +91,6 @@ export const adminApi = {
    * ANNOUNCEMENTS
    * ========================== */
 
-  // POST /api/admin/announcements
   createAnnouncement(data: {
     title: string;
     content: string;

@@ -1,3 +1,4 @@
+// AnnouncementCard.tsx
 import type { Announcement } from "../../types/announcement";
 import "./AnnouncementCard.css";
 
@@ -9,18 +10,12 @@ export default function AnnouncementCard({ announcement }: Props) {
   return (
     <div className="announcement-card">
       <div className="announcement-header">
-        <h4 className="announcement-title">
-          {announcement.title}
-        </h4>
-
+        <h3 className="announcement-title">{announcement.title}</h3>
         <span className="announcement-time">
-          {announcement.createdAt.toLocaleString()}
+          {new Date(announcement.createdAt).toLocaleString()}
         </span>
       </div>
-
-      <p className="announcement-content">
-        {announcement.content}
-      </p>
+      <p className="announcement-content">{announcement.content}</p>
     </div>
   );
 }

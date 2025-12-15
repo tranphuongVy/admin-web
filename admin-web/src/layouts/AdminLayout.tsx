@@ -16,11 +16,11 @@ export default function AdminLayout() {
       <Sidebar />
 
       <main className="content">
-        <div className="topbar">
+        {/* <div className="topbar">
           <button className="logout" onClick={handleLogout}>
             Logout
           </button>
-        </div>
+        </div> */}
 
         <Outlet />
       </main>
