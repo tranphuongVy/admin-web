@@ -9,6 +9,7 @@ interface Column<T> {
 interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
+  loading?: boolean;
 }
 
 export default function Table<T extends Record<string, unknown>>({

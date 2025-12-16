@@ -1,34 +1,142 @@
-import axiosAdmin from "./axiosAdmin";
+// import axiosAdmin from "./axiosAdmin";
+// import type { User } from "../types/user";
 
-/**
- * ADMIN API
- * Map 1–1 với AdminController (backend)
- */
+// /* ================= TYPES ================= */
+
+// interface PaginatedResponse<T> {
+//   items: T[];
+//   total: number;
+//   page: number;
+//   limit: number;
+// }
+
+// /* ================= ADMIN API ================= */
+
+// export const adminApi = {
+//   /* ==========================
+//    * USERS
+//    * ========================== */
+
+//   async listUsers(params: {
+//     page?: number;
+//     limit?: number;
+//     search?: string;
+//     status?: "ACTIVE" | "BANNED";
+//   }): Promise<PaginatedResponse<User>> {
+//     const res = await axiosAdmin.get("/admin/users", { params });
+//     return res.data.data;
+//   },
+
+//   banUser(userId: string) {
+//     return axiosAdmin.patch(`/admin/users/${userId}/ban`);
+//   },
+
+//   unbanUser(userId: string) {
+//     return axiosAdmin.patch(`/admin/users/${userId}/unban`);
+//   },
+
+//   resetUserPassword(userId: string, newPassword: string) {
+//     return axiosAdmin.post(`/admin/users/${userId}/reset-password`, {
+//       newPassword,
+//     });
+//   },
+
+//   /* ==========================
+//    * POSTS
+//    * ========================== */
+
+//   async listPosts(params: {
+//     page?: number;
+//     limit?: number;
+//     search?: string;
+//   }) {
+//     const res = await axiosAdmin.get("/admin/posts", { params });
+//     return res.data.data;
+//   },
+
+//   hidePost(postId: string) {
+//     return axiosAdmin.patch(`/admin/posts/${postId}/hide`);
+//   },
+
+//   unhidePost(postId: string) {
+//     return axiosAdmin.patch(`/admin/posts/${postId}/unhide`);
+//   },
+
+//   deletePost(postId: string) {
+//     return axiosAdmin.delete(`/admin/posts/${postId}`);
+//   },
+
+//   /* ==========================
+//    * COMMENTS
+//    * ========================== */
+
+//   async listComments(params: {
+//     page?: number;
+//     limit?: number;
+//     postId?: string;
+//   }) {
+//     const res = await axiosAdmin.get("/admin/comments", { params });
+//     return res.data.data;
+//   },
+
+//   hideComment(commentId: string) {
+//     return axiosAdmin.patch(`/admin/comments/${commentId}/hide`);
+//   },
+
+//   deleteComment(commentId: string) {
+//     return axiosAdmin.delete(`/admin/comments/${commentId}`);
+//   },
+
+//   /* ==========================
+//    * ANNOUNCEMENTS
+//    * ========================== */
+
+//   createAnnouncement(data: {
+//     title: string;
+//     content: string;
+//   }) {
+//     return axiosAdmin.post("/admin/announcements", data);
+//   },
+// };
+
+import axiosAdmin from "./axiosAdmin";
+import type { User } from "../types/user";
+import type { Post } from "../types/post";
+
+/* ================= TYPES ================= */
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/* ================= ADMIN API ================= */
+
 export const adminApi = {
   /* ==========================
    * USERS
    * ========================== */
 
-  // GET /api/admin/users
-  listUsers(params: {
+  async listUsers(params: {
     page?: number;
     limit?: number;
     search?: string;
-  }) {
-    return axiosAdmin.get("/admin/users", { params });
+    isBanned?: boolean;
+  }): Promise<PaginatedResponse<User>> {
+    const res = await axiosAdmin.get("/admin/users", { params });
+    return res.data.data;
   },
 
-  // PATCH /api/admin/users/:id/ban
   banUser(userId: string) {
     return axiosAdmin.patch(`/admin/users/${userId}/ban`);
   },
 
-  // PATCH /api/admin/users/:id/unban
   unbanUser(userId: string) {
     return axiosAdmin.patch(`/admin/users/${userId}/unban`);
   },
 
-  // POST /api/admin/users/:id/reset-password
   resetUserPassword(userId: string, newPassword: string) {
     return axiosAdmin.post(`/admin/users/${userId}/reset-password`, {
       newPassword,
@@ -36,29 +144,29 @@ export const adminApi = {
   },
 
   /* ==========================
-   * POSTS
+   * POSTS  FIXED
    * ========================== */
 
-  // GET /api/admin/posts
-  listPosts(params: {
+  async listPosts(params: {
     page?: number;
     limit?: number;
     search?: string;
-  }) {
-    return axiosAdmin.get("/admin/posts", { params });
+    includeDeleted?: boolean;
+    includeHidden?: boolean;
+  }): Promise<PaginatedResponse<Post>> {
+    const res = await axiosAdmin.get("/admin/posts", { params });
+
+    return res.data.data;
   },
 
-  // PATCH /api/admin/posts/:id/hide
   hidePost(postId: string) {
     return axiosAdmin.patch(`/admin/posts/${postId}/hide`);
   },
 
-  // PATCH /api/admin/posts/:id/unhide
   unhidePost(postId: string) {
     return axiosAdmin.patch(`/admin/posts/${postId}/unhide`);
   },
 
-  // DELETE /api/admin/posts/:id
   deletePost(postId: string) {
     return axiosAdmin.delete(`/admin/posts/${postId}`);
   },
@@ -67,21 +175,19 @@ export const adminApi = {
    * COMMENTS
    * ========================== */
 
-  // GET /api/admin/comments
-  listComments(params: {
+  async listComments(params: {
     page?: number;
     limit?: number;
     postId?: string;
   }) {
-    return axiosAdmin.get("/admin/comments", { params });
+    const res = await axiosAdmin.get("/admin/comments", { params });
+    return res.data.data;
   },
 
-  // PATCH /api/admin/comments/:id/hide
   hideComment(commentId: string) {
     return axiosAdmin.patch(`/admin/comments/${commentId}/hide`);
   },
 
-  // DELETE /api/admin/comments/:id
   deleteComment(commentId: string) {
     return axiosAdmin.delete(`/admin/comments/${commentId}`);
   },
@@ -90,7 +196,6 @@ export const adminApi = {
    * ANNOUNCEMENTS
    * ========================== */
 
-  // POST /api/admin/announcements
   createAnnouncement(data: {
     title: string;
     content: string;

@@ -143,3 +143,42 @@
   padding-top: 18px;
   border-top: 1px solid #e5e7eb;
 }
+
+.reset-password {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.reset-password label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.reset-password input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+/* Focus state */
+.reset-password input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Disabled */
+.reset-password input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
