@@ -1,51 +1,76 @@
-import axios, {
-  type AxiosInstance,
-  type InternalAxiosRequestConfig,
-  type AxiosError,
-} from "axios";
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosError } from "axios";
+import { authApiClient } from "./auth.api";
 
 const axiosAdmin: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // http://localhost:3000/api
+  baseURL: import.meta.env.VITE_API_URL, // ví dụ: http://localhost:3000/api
 });
 
-/**
- * Attach access token
- */
-// axiosAdmin.interceptors.request.use(
-//   (config: InternalAxiosRequestConfig) => {
-//     const token = localStorage.getItem("adminAccessToken");
+let isRefreshing = false;
+let failedQueue: ((token?: string) => void)[] = [];
 
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
+const processQueue = (token?: string) => {
+  failedQueue.forEach((cb) => cb(token));
+  failedQueue = [];
+};
 
-//     return config;
-//   },
-//   (error: AxiosError) => Promise.reject(error)
-// );
+// attach token trước khi request
 axiosAdmin.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("adminAccessToken");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
 );
 
-/**
- * Handle 401 – token expired
- */
+// handle 401 response
 axiosAdmin.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      localStorage.clear();
-      //window.location.href = "/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // nếu 401 và chưa retry
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem("adminRefreshToken");
+      if (!refreshToken) {
+        localStorage.clear();
+        window.location.href = "/admin/login";
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          failedQueue.push((token?: string) => {
+            if (token && originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(axiosAdmin(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+      try {
+        const res = await authApiClient.refresh(refreshToken);
+const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+
+        localStorage.setItem("adminAccessToken", accessToken);
+        localStorage.setItem("adminRefreshToken", newRefreshToken);
+
+        if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        processQueue(accessToken);
+
+        return axiosAdmin(originalRequest);
+      } catch (err) {
+        processQueue();
+        localStorage.clear();
+        window.location.href = "/admin/login";
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   }
 );
