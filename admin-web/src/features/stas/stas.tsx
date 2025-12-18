@@ -15,37 +15,28 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  CartesianGrid,
   Legend,
 } from "recharts";
 import { adminApi } from "../../api/admin.api";
 import "./stas.css";
+import type { Stats } from "../../types/stats";
 
-type Stats = {
-  users: {
-    active: number;
-    banned: number;
-  };
-  posts: {
-    total: number;
-    hidden: number;
-    deleted: number;
-  };
-  comments: {
-    total: number;
-    hidden: number;
-    deleted: number;
-  };
-};
+type ChartType = "USERS" | "POSTS" | "COMMENTS";
 
-const COLORS = ["#2563eb", "#f59e0b", "#dc2626"];
+/* ================= CONSTANTS ================= */
+
+const USER_COLORS = ["#2563eb", "#dc2626"];
+
+/* ================= COMPONENT ================= */
 
 export default function StatisticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [chartType, setChartType] =
+    useState<ChartType>("USERS");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /* ================= FETCH ================= */
 
   useEffect(() => {
     let mounted = true;
@@ -75,37 +66,95 @@ export default function StatisticsPage() {
     return <p className="stats-empty error">{error}</p>;
   if (!stats) return null;
 
-  /* ===== BAR CHART DATA ===== */
-  const barData = [
-    { name: "Users", value: stats.users.active },
-    { name: "Posts", value: stats.posts.total },
-    { name: "Comments", value: stats.comments.total },
+  /* ================= DATA ================= */
+
+  const userPieData = [
+    { name: "Active", value: stats.users.active },
+    { name: "Banned", value: stats.users.banned },
   ];
 
-  /* ===== PIE CHART DATA ===== */
-  const pieData = [
-    {
-      name: "Active Users",
-      value: stats.users.active,
-    },
-    {
-      name: "Hidden Posts",
-      value: stats.posts.hidden,
-    },
-    {
-      name: "Deleted Posts",
-      value: stats.posts.deleted,
-    },
+  const postBarData = [
+    { name: "Total", value: stats.posts.total },
+    { name: "Hidden", value: stats.posts.hidden },
+    { name: "Deleted", value: stats.posts.deleted },
   ];
 
-  /* ===== LINE CHART DATA (mock trend – ready for real API) ===== */
-  const lineData = [
-    { name: "Mon", posts: 2, comments: 1 },
-    { name: "Tue", posts: 3, comments: 2 },
-    { name: "Wed", posts: 4, comments: 3 },
-    { name: "Thu", posts: 5, comments: 4 },
-    { name: "Fri", posts: stats.posts.total, comments: stats.comments.total },
+  const commentBarData = [
+    { name: "Total", value: stats.comments.total },
+    { name: "Hidden", value: stats.comments.hidden },
+    { name: "Deleted", value: stats.comments.deleted },
   ];
+
+  /* ================= RENDER CHART ================= */
+
+  const renderChart = () => {
+    switch (chartType) {
+      case "USERS":
+        return (
+          <div className="chart-card">
+            <h3>User Status Distribution</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={userPieData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={100}
+                  label
+                >
+                  {userPieData.map((_, i) => (
+                    <Cell
+                      key={i}
+                      fill={USER_COLORS[i]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case "POSTS":
+        return (
+          <div className="chart-card">
+            <h3>Post Status</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={postBarData}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar
+                  dataKey="value"
+                  fill="#2563eb"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case "COMMENTS":
+        return (
+          <div className="chart-card">
+            <h3>Comment Status</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={commentBarData}>
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar
+                  dataKey="value"
+                  fill="#10b981"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+    }
+  };
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="stas-page">
@@ -114,122 +163,65 @@ export default function StatisticsPage() {
         <h2>
           <FiBarChart2 /> Statistics
         </h2>
-        <p className="subtitle">Overview of system activity</p>
+        <p className="subtitle">
+          Select chart type to view details
+        </p>
       </div>
 
-      {/* ===== SUMMARY CARDS ===== */}
+      {/* ===== SUMMARY ===== */}
       <div className="stas-cards">
         <div className="stas-card">
-          <div className="card-icon users">
-            <FiUsers />
-          </div>
-          <div className="card-info">
-            <span className="label">Active Users</span>
-            <strong className="value">
-              {stats.users.active}
-            </strong>
-            <span className="sub">
-              Banned: {stats.users.banned}
-            </span>
+          <FiUsers />
+          <div>
+            <strong>{stats.users.active}</strong>
+            <span>Active Users</span>
           </div>
         </div>
 
         <div className="stas-card">
-          <div className="card-icon posts">
-            <FiFileText />
-          </div>
-          <div className="card-info">
-            <span className="label">Posts</span>
-            <strong className="value">
-              {stats.posts.total}
-            </strong>
-            <span className="sub">
-              Hidden: {stats.posts.hidden} · Deleted:{" "}
-              {stats.posts.deleted}
-            </span>
+          <FiFileText />
+          <div>
+            <strong>{stats.posts.total}</strong>
+            <span>Total Posts</span>
           </div>
         </div>
 
         <div className="stas-card">
-          <div className="card-icon comments">
-            <FiMessageCircle />
-          </div>
-          <div className="card-info">
-            <span className="label">Comments</span>
-            <strong className="value">
-              {stats.comments.total}
-            </strong>
-            <span className="sub">
-              Hidden: {stats.comments.hidden} · Deleted:{" "}
-              {stats.comments.deleted}
-            </span>
+          <FiMessageCircle />
+          <div>
+            <strong>{stats.comments.total}</strong>
+            <span>Total Comments</span>
           </div>
         </div>
       </div>
 
-      {/* ===== CHARTS ===== */}
-      <div className="stas-charts">
-        {/* BAR */}
-        <div className="chart-card">
-          <h3>Overview Comparison</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={barData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#2563eb" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* PIE */}
-        <div className="chart-card">
-          <h3>Status Distribution</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={90}
-                label
-              >
-                {pieData.map((_, i) => (
-                  <Cell
-                    key={i}
-                    fill={COLORS[i % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* LINE */}
-        <div className="chart-card wide">
-          <h3>Activity Trend</h3>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="posts"
-                stroke="#2563eb"
-              />
-              <Line
-                type="monotone"
-                dataKey="comments"
-                stroke="#9333ea"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      {/* ===== FILTER ===== */}
+      <div className="stas-filter">
+        <label>
+          Chart type:
+          <select
+            value={chartType}
+            onChange={(e) =>
+              setChartType(
+                e.target.value as ChartType
+              )
+            }
+          >
+            <option value="USERS">
+              Users
+            </option>
+            <option value="POSTS">
+              Posts
+            </option>
+            <option value="COMMENTS">
+              Comments
+            </option>
+          </select>
+        </label>
       </div>
+
+      {/* ===== CHART ===== */}
+      {renderChart()}
     </div>
   );
 }

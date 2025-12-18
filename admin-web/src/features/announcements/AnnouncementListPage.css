@@ -135,6 +135,26 @@
   background: rgba(255, 255, 255, 0.4);
 }
 
+.announcement-list {
+  display: flex;
+  flex-direction: column; /* thẻ hiển thị dọc */
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pagination {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+
 /* ===== ANIMATION ===== */
 @keyframes slideIn {
   from {

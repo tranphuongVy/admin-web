@@ -1,149 +1,159 @@
-// import { useMemo, useState } from "react";
-// import type { ChangeEvent } from "react";
+// import { useEffect, useState } from "react";
 // import Table from "../../components/Table/Table";
 // import Button from "../../components/Button/Button";
+// import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 // import type { Comment } from "../../types/comment";
-// import {
-//   getHiddenComments,
-//   restoreComment,
-// } from "../../store/commentStore";
+// import { adminApi } from "../../api/admin.api";
 // import "./CommentListPage.css";
 
 // const PAGE_SIZE = 6;
 
+// type CommentRow = Comment & { postText: string };
+
 // export default function CommentListPage() {
 //   /* ================= STATE ================= */
-//   const [page, setPage] = useState(1);
-//   const [refresh, setRefresh] = useState(0);
+//   const [comments, setComments] = useState<CommentRow[]>([]);
+//   const [total, setTotal] = useState(0);
 
+//   const [page, setPage] = useState(1);
 //   const [search, setSearch] = useState("");
 //   const [fromDate, setFromDate] = useState("");
 //   const [toDate, setToDate] = useState("");
 
-//   /* ================= DATA ================= */
-//   const comments = useMemo(() => {
-//     return getHiddenComments();
-//   }, [refresh]);
+//   const [selected, setSelected] = useState<CommentRow | null>(null);
 
-//   /* ================= SEARCH + FILTER ================= */
-//   const filteredComments = useMemo(() => {
-//     return comments.filter((c) => {
-//       // search theo content + author
-//       const keyword = search.toLowerCase();
-//       const matchSearch =
-//         c.content.toLowerCase().includes(keyword) ||
-//         c.author.name.toLowerCase().includes(keyword);
+//   /* ================= FETCH ================= */
+//   const fetchComments = async () => {
+//     try {
+//       const res = await adminApi.listComments({ page, limit: PAGE_SIZE });
 
-//       // filter theo ngày
-//       const createdTime = c.createdAt.getTime();
+//       const items: CommentRow[] = res.items.map((c: Comment) => ({
+//         ...c,
+//         createdAt: new Date(c.createdAt),
+//         updatedAt: new Date(c.updatedAt),
+//         deletedAt: c.deletedAt ? new Date(c.deletedAt) : null,
+//         post: { ...c.post, deletedAt: c.post.deletedAt ? new Date(c.post.deletedAt) : null },
+//         postText: c.post.text || "—",
+//       }));
 
-//       const matchFromDate = fromDate
-//         ? createdTime >= new Date(fromDate).getTime()
-//         : true;
+//       // frontend filter
+//       let filtered = items;
+//       if (search) {
+//         const keyword = search.toLowerCase();
+//         filtered = filtered.filter(
+//           (c) =>
+//             c.content.toLowerCase().includes(keyword) ||
+//             c.author.name.toLowerCase().includes(keyword)
+//         );
+//       }
 
-//       const matchToDate = toDate
-//         ? createdTime <= new Date(toDate + "T23:59:59").getTime()
-//         : true;
+//       if (fromDate) {
+//         const from = new Date(fromDate).getTime();
+//         filtered = filtered.filter((c) => c.createdAt.getTime() >= from);
+//       }
 
-//       return matchSearch && matchFromDate && matchToDate;
-//     });
-//   }, [comments, search, fromDate, toDate]);
+//       if (toDate) {
+//         const to = new Date(toDate + "T23:59:59").getTime();
+//         filtered = filtered.filter((c) => c.createdAt.getTime() <= to);
+//       }
 
-//   /* ================= PAGINATION ================= */
-//   const totalPages = Math.ceil(filteredComments.length / PAGE_SIZE);
+//       setComments(filtered);
+//       setTotal(res.total);
+//     } catch (err) {
+//       console.error("Failed to fetch comments", err);
+//     }
+//   };
 
-//   const pagedComments = useMemo(() => {
-//     const start = (page - 1) * PAGE_SIZE;
-//     return filteredComments.slice(start, start + PAGE_SIZE);
-//   }, [filteredComments, page]);
+//   useEffect(() => {
+//     fetchComments();
+//   }, [page, search, fromDate, toDate]);
 
 //   /* ================= TABLE ================= */
 //   const columns = [
 //     {
 //       key: "content" as const,
 //       title: "Content",
-//       render: (c: Comment) => <p>{c.content}</p>,
+//       render: (c: CommentRow) => <p>{c.content}</p>,
 //     },
 //     {
-//       key: "author" as const,
-//       title: "Author",
-//       render: (c: Comment) => c.author.name,
+//       key: "postText" as const,
+//       title: "Post",
+//       render: (c: CommentRow) => c.postText,
 //     },
 //     {
 //       key: "createdAt" as const,
 //       title: "Created At",
-//       render: (c: Comment) => c.createdAt.toLocaleString(),
+//       render: (c: CommentRow) => c.createdAt.toLocaleString(),
 //     },
 //     {
-//       key: "id" as const,
+//       key: "deletedAt" as const,
 //       title: "Action",
-//       render: (c: Comment) => (
-//         <Button
-//           variant="primary"
-//           onClick={() => {
-//             restoreComment(c.id);
-//             setRefresh((r) => r + 1);
-//           }}
-//         >
-//           Restore
+//       render: (c: CommentRow) => (
+//         <Button variant="danger" onClick={() => setSelected(c)}>
+//           Delete
 //         </Button>
 //       ),
 //     },
 //   ];
 
-//   /* ================= HANDLERS ================= */
-//   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-//     setSearch(e.target.value);
-//     setPage(1);
+//   /* ================= DELETE ================= */
+//   const handleConfirmDelete = async () => {
+//     if (!selected) return;
+
+//     try {
+//       await adminApi.deleteComment(selected.id);
+//       fetchComments();
+//     } catch (err) {
+//       console.error("Delete failed", err);
+//     } finally {
+//       setSelected(null);
+//     }
 //   };
 
-//   const handleFromDate = (e: ChangeEvent<HTMLInputElement>) => {
-//     setFromDate(e.target.value);
-//     setPage(1);
-//   };
-
-//   const handleToDate = (e: ChangeEvent<HTMLInputElement>) => {
-//     setToDate(e.target.value);
-//     setPage(1);
-//   };
+//   /* ================= PAGINATION ================= */
+//   const totalPages = Math.ceil(total / PAGE_SIZE);
 
 //   /* ================= RENDER ================= */
 //   return (
 //     <div className="page">
 //       <div className="page-header">
-//         <h2>Hidden Comments</h2>
+//         <h2>Comments</h2>
 //       </div>
 
-//       {/* ===== Toolbar ===== */}
 //       <div className="toolbar">
 //         <input
 //           className="search"
 //           placeholder="Search by content or author..."
 //           value={search}
-//           onChange={handleSearch}
+//           onChange={(e) => {
+//             setSearch(e.target.value);
+//             setPage(1);
+//           }}
 //         />
-
 //         <input
+//         title="date2"
 //           type="date"
 //           className="filter-date"
 //           value={fromDate}
-//           onChange={handleFromDate}
-//           title="From date"
+//           onChange={(e) => {
+//             setFromDate(e.target.value);
+//             setPage(1);
+//           }}
 //         />
-
 //         <input
+//         title="date"
 //           type="date"
 //           className="filter-date"
 //           value={toDate}
-//           onChange={handleToDate}
-//           title="To date"
+//           onChange={(e) => {
+//             setToDate(e.target.value);
+//             setPage(1);
+//           }}
 //         />
 //       </div>
 
-//       {/* ===== Table ===== */}
-//       <Table<Comment> columns={columns} data={pagedComments} />
+//       <Table<CommentRow> columns={columns} data={comments} />
 
-//       {/* ===== Pagination ===== */}
 //       <div className="pagination">
 //         <Button
 //           variant="ghost"
@@ -152,11 +162,9 @@
 //         >
 //           Prev
 //         </Button>
-
-//         <span>
+//         <span className="page-info">
 //           Page {page} / {totalPages || 1}
 //         </span>
-
 //         <Button
 //           variant="ghost"
 //           disabled={page === totalPages || totalPages === 0}
@@ -165,6 +173,14 @@
 //           Next
 //         </Button>
 //       </div>
+
+//       <ConfirmDialog
+//         open={!!selected}
+//         title="Delete comment"
+//         message="Are you sure you want to delete this comment?"
+//         onCancel={() => setSelected(null)}
+//         onConfirm={handleConfirmDelete}
+//       />
 //     </div>
 //   );
 // }
@@ -173,96 +189,137 @@ import { useEffect, useState } from "react";
 import Table from "../../components/Table/Table";
 import Button from "../../components/Button/Button";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+
 import type { Comment } from "../../types/comment";
 import { adminApi } from "../../api/admin.api";
+
 import "./CommentListPage.css";
 
-const PAGE_SIZE = 6;
-
-type CommentRow = Comment & { postText: string };
+const PAGE_SIZE = 5;
 
 export default function CommentListPage() {
   /* ================= STATE ================= */
-  const [comments, setComments] = useState<CommentRow[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [total, setTotal] = useState(0);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  const [selected, setSelected] = useState<CommentRow | null>(null);
+  const [includeHidden, setIncludeHidden] = useState(false);
+  const [includeDeleted, setIncludeDeleted] = useState(false);
 
-  /* ================= FETCH ================= */
+  const [selected, setSelected] = useState<Comment | null>(null);
+
+  /* ================= FETCH COMMENTS ================= */
   const fetchComments = async () => {
     try {
-      const res = await adminApi.listComments({ page, limit: PAGE_SIZE });
+      const res = await adminApi.listComments({
+        page,
+        limit: PAGE_SIZE,
+        includeHidden,
+        includeDeleted,
+      });
 
-      const items: CommentRow[] = res.items.map((c: Comment) => ({
-        ...c,
-        createdAt: new Date(c.createdAt),
-        updatedAt: new Date(c.updatedAt),
-        deletedAt: c.deletedAt ? new Date(c.deletedAt) : null,
-        post: { ...c.post, deletedAt: c.post.deletedAt ? new Date(c.post.deletedAt) : null },
-        postText: c.post.text || "—",
-      }));
+      let items: Comment[] = res.items;
 
-      // frontend filter
-      let filtered = items;
+      // ===== frontend filter search =====
       if (search) {
         const keyword = search.toLowerCase();
-        filtered = filtered.filter(
+        items = items.filter(
           (c) =>
             c.content.toLowerCase().includes(keyword) ||
             c.author.name.toLowerCase().includes(keyword)
         );
       }
 
+      // ===== frontend filter date range =====
       if (fromDate) {
         const from = new Date(fromDate).getTime();
-        filtered = filtered.filter((c) => c.createdAt.getTime() >= from);
+        items = items.filter(
+          (c) => new Date(c.createdAt).getTime() >= from
+        );
       }
 
       if (toDate) {
         const to = new Date(toDate + "T23:59:59").getTime();
-        filtered = filtered.filter((c) => c.createdAt.getTime() <= to);
+        items = items.filter(
+          (c) => new Date(c.createdAt).getTime() <= to
+        );
       }
 
-      setComments(filtered);
+      setComments(items);
       setTotal(res.total);
     } catch (err) {
-      console.error("Failed to fetch comments", err);
+      console.error("Fetch comments failed", err);
     }
   };
 
   useEffect(() => {
     fetchComments();
-  }, [page, search, fromDate, toDate]);
+  }, [page, search, includeHidden, includeDeleted, fromDate, toDate]);
 
   /* ================= TABLE ================= */
   const columns = [
     {
       key: "content" as const,
-      title: "Content",
-      render: (c: CommentRow) => <p>{c.content}</p>,
-    },
-    {
-      key: "postText" as const,
-      title: "Post",
-      render: (c: CommentRow) => c.postText,
+      title: "Comment",
+      render: (c: Comment) => (
+        <div className="comment-content">
+          <strong>{c.author.name}</strong>
+          <p>{c.content || "—"}</p>
+
+          {c.hiddenAt && (
+            <span className="badge badge-hidden">Hidden</span>
+          )}
+          {c.deletedAt && (
+            <span className="badge badge-deleted">Deleted</span>
+          )}
+        </div>
+      ),
     },
     {
       key: "createdAt" as const,
-      title: "Created At",
-      render: (c: CommentRow) => c.createdAt.toLocaleString(),
+      title: "Created",
+      render: (c: Comment) =>
+        new Date(c.createdAt).toLocaleString(),
     },
     {
-      key: "deletedAt" as const,
+      key: "id" as const,
       title: "Action",
-      render: (c: CommentRow) => (
-        <Button variant="danger" onClick={() => setSelected(c)}>
-          Delete
-        </Button>
+      render: (c: Comment) => (
+        <div className="actions-inline">
+          {!c.deletedAt && (
+            <>
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    if (c.hiddenAt) {
+                      await adminApi.unhideComment(c.id);
+                    } else {
+                      await adminApi.hideComment(c.id);
+                    }
+                    fetchComments();
+                  } catch (err) {
+                    console.error("Hide/Unhide comment failed", err);
+                  }
+                }}
+              >
+                {c.hiddenAt ? "Unhide" : "Hide"}
+              </Button>
+
+              <Button
+                variant="danger"
+                onClick={() => setSelected(c)}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
       ),
     },
   ];
@@ -275,7 +332,7 @@ export default function CommentListPage() {
       await adminApi.deleteComment(selected.id);
       fetchComments();
     } catch (err) {
-      console.error("Delete failed", err);
+      console.error("Delete comment failed", err);
     } finally {
       setSelected(null);
     }
@@ -291,6 +348,7 @@ export default function CommentListPage() {
         <h2>Comments</h2>
       </div>
 
+      {/* ===== Toolbar ===== */}
       <div className="toolbar">
         <input
           className="search"
@@ -301,8 +359,9 @@ export default function CommentListPage() {
             setPage(1);
           }}
         />
+
         <input
-        title="date2"
+        title="date1"
           type="date"
           className="filter-date"
           value={fromDate}
@@ -311,8 +370,9 @@ export default function CommentListPage() {
             setPage(1);
           }}
         />
+
         <input
-        title="date"
+        title="date2"
           type="date"
           className="filter-date"
           value={toDate}
@@ -321,10 +381,36 @@ export default function CommentListPage() {
             setPage(1);
           }}
         />
+
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={includeHidden}
+            onChange={(e) => {
+              setIncludeHidden(e.target.checked);
+              setPage(1);
+            }}
+          />
+          Include hidden
+        </label>
+
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={includeDeleted}
+            onChange={(e) => {
+              setIncludeDeleted(e.target.checked);
+              setPage(1);
+            }}
+          />
+          Include deleted
+        </label>
       </div>
 
-      <Table<CommentRow> columns={columns} data={comments} />
+      {/* ===== Table ===== */}
+      <Table<Comment> columns={columns} data={comments} />
 
+      {/* ===== Pagination ===== */}
       <div className="pagination">
         <Button
           variant="ghost"
@@ -333,9 +419,11 @@ export default function CommentListPage() {
         >
           Prev
         </Button>
+
         <span className="page-info">
           Page {page} / {totalPages || 1}
         </span>
+
         <Button
           variant="ghost"
           disabled={page === totalPages || totalPages === 0}
@@ -345,6 +433,7 @@ export default function CommentListPage() {
         </Button>
       </div>
 
+      {/* ===== Confirm Delete ===== */}
       <ConfirmDialog
         open={!!selected}
         title="Delete comment"

@@ -1,6 +1,8 @@
 import axiosAdmin from "./axiosAdmin";
 import type { User } from "../types/user";
 import type { Post } from "../types/post";
+import type { Comment } from "../types/comment";
+import type { Announcement } from "../types/announcement";
 
 /* ================= TYPES ================= */
 
@@ -9,6 +11,20 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+/* ================= RAW TYPES FROM API ================= */
+
+interface RawAnnouncement {
+  id: string;
+  userId: string;
+  type: string;
+  payload: {
+    title: string;
+    content: string;
+  };
+  isRead: boolean;
+  createdAt: string;
 }
 
 /* ================= ADMIN API ================= */
@@ -77,7 +93,10 @@ export const adminApi = {
     page?: number;
     limit?: number;
     postId?: string;
-  }) {
+    search?: string;
+    includeHidden?: boolean;
+    includeDeleted?: boolean;
+  }): Promise<PaginatedResponse<Comment>> {
     const res = await axiosAdmin.get("/admin/comments", { params });
     return res.data.data;
   },
@@ -98,12 +117,20 @@ export const adminApi = {
    * ANNOUNCEMENTS
    * ========================== */
 
-  createAnnouncement(data: {
-    title: string;
-    content: string;
-  }) {
+  createAnnouncement(data: { title: string; content: string }) {
     return axiosAdmin.post("/admin/announcements", data);
   },
+
+  listAnnouncements: async (): Promise<Announcement[]> => {
+  const res = await axiosAdmin.get("/notifications/announcements"); // full path tùy proxy
+  const items: RawAnnouncement[] = res.data.data.items;
+  return items.map<Announcement>((a) => ({
+    id: a.id,
+    title: a.payload.title,
+    content: a.payload.content,
+    createdAt: new Date(a.createdAt),
+  }));
+},
 
   /* ==========================
    * PASSWORD RESET REQUESTS
@@ -114,9 +141,7 @@ export const adminApi = {
   },
 
   approvePasswordResetRequest(token: string) {
-    return axiosAdmin.post(
-      `/admin/password-reset-requests/${token}/approve`
-    );
+    return axiosAdmin.post(`/admin/password-reset-requests/${token}/approve`);
   },
 
   /* ==========================

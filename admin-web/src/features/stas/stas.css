@@ -1,11 +1,12 @@
-/* ===== PAGE ===== */
+/* ================= ROOT ================= */
 .stas-page {
-  padding: 24px 32px;
+  padding: 24px;
   background: #f9fafb;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
-/* ===== HEADER ===== */
+/* ================= HEADER ================= */
 .stas-header {
   margin-bottom: 24px;
 }
@@ -13,7 +14,7 @@
 .stas-header h2 {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 22px;
   font-weight: 600;
   color: #111827;
@@ -25,86 +26,92 @@
   color: #6b7280;
 }
 
-/* ===== CARDS GRID ===== */
+/* ================= SUMMARY CARDS ================= */
 .stas-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-/* ===== CARD ===== */
 .stas-card {
   background: #ffffff;
-  border-radius: 14px;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.stas-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-}
-
-/* ===== ICON ===== */
-.card-icon {
-  width: 46px;
-  height: 46px;
   border-radius: 12px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.stas-card svg {
+  font-size: 26px;
+  color: #2563eb;
+}
+
+.stas-card strong {
   font-size: 22px;
-  color: #ffffff;
+  color: #111827;
+  display: block;
 }
 
-.card-icon.users {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-}
-
-.card-icon.posts {
-  background: linear-gradient(135deg, #16a34a, #15803d);
-}
-
-.card-icon.comments {
-  background: linear-gradient(135deg, #9333ea, #7e22ce);
-}
-
-/* ===== CARD INFO ===== */
-.card-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-info .label {
+.stas-card span {
   font-size: 13px;
   color: #6b7280;
-  margin-bottom: 2px;
 }
 
-.card-info .value {
-  font-size: 26px;
-  font-weight: 700;
+/* ================= FILTER ================= */
+.stas-filter {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.stas-filter label {
+  font-size: 14px;
+  color: #374151;
+}
+
+.stas-filter select {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+/* ================= CHART ================= */
+.chart-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.chart-card h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
   color: #111827;
-  line-height: 1.2;
 }
 
-.card-info .sub {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-/* ===== EMPTY / ERROR ===== */
+/* ================= EMPTY / ERROR ================= */
 .stats-empty {
   padding: 40px;
   text-align: center;
+  font-size: 14px;
   color: #6b7280;
 }
 
 .stats-empty.error {
   color: #dc2626;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .stas-filter {
+    justify-content: flex-start;
+  }
 }
