@@ -1,106 +1,226 @@
-import { useMemo, useState } from "react";
-import AnnouncementCard from "../../components/AnnouncementCard/AnnouncementCard";
-import CreateAnnouncementForm from "../../components/CreateAnnouncementForm/CreateAnnouncementForm";
+import { useEffect, useState } from "react";
+import Table from "../../components/Table/Table";
 import Button from "../../components/Button/Button";
-import type { Announcement } from "../../types/announcement";
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import CreateAnnouncementForm from "../../components/CreateAnnouncementForm/CreateAnnouncementForm";
+import type { PasswordResetRequest } from "../../types/passwordResetRequest";
+import { adminApi } from "../../api/admin.api";
 import "./AnnouncementListPage.css";
 
-/* ================= MOCK DATA ================= */
+/* ================= ROW TYPE ================= */
+type PasswordResetRow = PasswordResetRequest & {
+  [key: string]: unknown;
+  email: string;
+  userName: string;
+  createdAtText: string;
+  expiresAtText: string;
+  status: "PENDING" | "USED" | "EXPIRED";
+};
 
-const MOCK_ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: "1",
-    title: "Thông báo bảo trì hệ thống",
-    content:
-      "Hệ thống sẽ bảo trì từ 22:00 ngày 20/12 đến 02:00 ngày 21/12.",
-    createdAt: new Date("2025-12-20T22:00:00"),
-  },
-  {
-    id: "2",
-    title: "Cập nhật chính sách nội dung",
-    content:
-      "Admin vừa cập nhật chính sách kiểm duyệt nội dung mới.",
-    createdAt: new Date("2025-12-18T09:30:00"),
-  },
-];
+export default function PasswordResetRequestPage() {
+  /* ---------- STATE ---------- */
+  const [rows, setRows] = useState<PasswordResetRow[]>([]);
+  const [filtered, setFiltered] = useState<PasswordResetRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
-/* ================= PAGE ================= */
+  const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-export default function AnnouncementListPage() {
-  /* ===== STATE ===== */
-  const [announcements, setAnnouncements] =
-    useState<Announcement[]>(MOCK_ANNOUNCEMENTS);
+  const [selected, setSelected] =
+    useState<PasswordResetRow | null>(null);
 
   const [openCreate, setOpenCreate] = useState(false);
 
-  /* ===== SORT ===== */
-  const sortedAnnouncements = useMemo(
-    () =>
-      [...announcements].sort(
-        (a, b) =>
-          b.createdAt.getTime() - a.createdAt.getTime()
-      ),
-    [announcements]
-  );
+  const [successMsg, setSuccessMsg] = useState(""); // 🔥 thông báo thành công
 
-  /* ===== HANDLER CREATE ===== */
-  const handleCreateAnnouncement = (data: {
-    title: string;
-    content: string;
-  }) => {
-    const newAnnouncement: Announcement = {
-      id: Date.now().toString(),
-      title: data.title,
-      content: data.content,
-      createdAt: new Date(),
-    };
+  /* ---------- FETCH ---------- */
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const res = await adminApi.listPasswordResetRequests();
 
-    setAnnouncements((prev) => [
-      newAnnouncement,
-      ...prev,
-    ]);
+      const mapped: PasswordResetRow[] =
+        res.data.data.items.map((r: PasswordResetRequest) => {
+          const expired =
+            new Date(r.expiresAt).getTime() < Date.now();
+
+          let status: PasswordResetRow["status"] = "PENDING";
+          if (r.usedAt) status = "USED";
+          else if (expired) status = "EXPIRED";
+
+          return {
+            ...r,
+            email: r.user.email,
+            userName: r.user.name,
+            createdAtText: new Date(r.createdAt).toLocaleString(),
+            expiresAtText: new Date(r.expiresAt).toLocaleString(),
+            status,
+          };
+        });
+
+      setRows(mapped);
+      setFiltered(mapped);
+    } catch (err) {
+      console.error("Fetch reset requests error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* ================= RENDER ================= */
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
+  /* ---------- FILTER ---------- */
+  useEffect(() => {
+    let result = [...rows];
+
+    if (search) {
+      const keyword = search.toLowerCase();
+      result = result.filter(
+        (r) =>
+          r.email.toLowerCase().includes(keyword) ||
+          r.userName.toLowerCase().includes(keyword)
+      );
+    }
+
+    if (fromDate) {
+      const from = new Date(fromDate).getTime();
+      result = result.filter(
+        (r) => new Date(r.createdAt).getTime() >= from
+      );
+    }
+
+    if (toDate) {
+      const to = new Date(toDate + "T23:59:59").getTime();
+      result = result.filter(
+        (r) => new Date(r.createdAt).getTime() <= to
+      );
+    }
+
+    setFiltered(result);
+  }, [search, fromDate, toDate, rows]);
+
+  /* ---------- APPROVE ---------- */
+  const handleApprove = async () => {
+    if (!selected) return;
+    try {
+      await adminApi.approvePasswordResetRequest(selected.token);
+      setSelected(null);
+      fetchRequests();
+    } catch (err) {
+      console.error("Approve reset error:", err);
+    }
+  };
+
+  /* ---------- TABLE ---------- */
+  const columns = [
+    { key: "email", title: "Email" },
+    { key: "userName", title: "User Name" },
+    { key: "createdAtText", title: "Requested At" },
+    { key: "expiresAtText", title: "Expires At" },
+    {
+      key: "status",
+      title: "Status",
+      render: (r: PasswordResetRow) => (
+        <span className={`status-${r.status.toLowerCase()}`}>
+          {r.status}
+        </span>
+      ),
+    },
+    {
+      key: "action",
+      title: "Action",
+      render: (r: PasswordResetRow) => (
+        <Button
+          disabled={r.status !== "PENDING"}
+          onClick={() => setSelected(r)}
+        >
+          Approve
+        </Button>
+      ),
+    },
+  ];
+
+  /* ---------- RENDER ---------- */
   return (
-    <div className="announcement-page">
-      {/* ===== HEADER ===== */}
-      <div className="announcement-page-header">
-        <div>
-          <h2>Admin Announcements</h2>
-          <p>
-            Quản lý và hiển thị các thông báo chính thức
-            từ hệ thống dành cho người dùng
-          </p>
-        </div>
+    <div className="page">
+      <div className="page-header">
+        <h2>Password Reset Requests</h2>
+      </div>
+
+      {/* ===== SUCCESS MESSAGE ===== */}
+{successMsg && (
+  <div className="toast-success">
+    <span className="toast-text">{successMsg}</span>
+    <button
+      className="toast-close"
+      onClick={() => setSuccessMsg("")}
+    >
+      ×
+    </button>
+  </div>
+)}
+
+
+
+      {/* ===== TOOLBAR ===== */}
+      <div className="toolbar">
+        <input
+          className="search"
+          placeholder="Search by email or user name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <input
+        title="date1"
+          type="date"
+          className="filter-date"
+          value={fromDate}
+          onChange={(e) => setFromDate(e.target.value)}
+        />
+
+        <input
+        title="date2"
+          type="date"
+          className="filter-date"
+          value={toDate}
+          onChange={(e) => setToDate(e.target.value)}
+        />
 
         <Button onClick={() => setOpenCreate(true)}>
-          + Create Announcement
+          Create Announcement
         </Button>
       </div>
 
-      {/* ===== LIST ===== */}
-      {sortedAnnouncements.length === 0 ? (
-        <div className="announcement-empty">
-          <p>Chưa có thông báo nào</p>
-        </div>
-      ) : (
-        <div className="announcement-list">
-          {sortedAnnouncements.map((a) => (
-            <AnnouncementCard
-              key={a.id}
-              announcement={a}
-            />
-          ))}
-        </div>
-      )}
+      <Table<PasswordResetRow>
+        columns={columns}
+        data={filtered}
+        loading={loading}
+      />
 
-      {/* ===== CREATE FORM ===== */}
+      <ConfirmDialog
+        open={!!selected}
+        title="Approve password reset"
+        message={
+          selected
+            ? `Approve password reset for ${selected.email}?`
+            : ""
+        }
+        onCancel={() => setSelected(null)}
+        onConfirm={handleApprove}
+      />
+
+      {/* ===== CREATE ANNOUNCEMENT ===== */}
       <CreateAnnouncementForm
         open={openCreate}
         onClose={() => setOpenCreate(false)}
-        onSubmit={handleCreateAnnouncement}
+        onSuccess={() => {
+          setSuccessMsg("Tạo thông báo thành công !");
+          setTimeout(() => setSuccessMsg(""), 3000);
+        }}
       />
     </div>
   );

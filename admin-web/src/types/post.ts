@@ -22,12 +22,18 @@
 //   media: Media[];
 //   aiStatus: "APPROVED" | "REJECTED" | "PENDING";
 //   aiReason?: string;
+
 //   createdAt: Date;
 
-//   // === optional fields để giống backend ===
+//   // ===== ADMIN FIELDS =====
+//   hiddenAt?: Date | null;
 //   deletedAt?: Date | null;
+
+//   // ===== SHARE =====
 //   sharedFrom?: Post;
 // };
+
+import type { Comment } from "./comment";
 
 export type Privacy = "PUBLIC" | "PRIVATE" | "FRIENDS";
 
@@ -35,7 +41,7 @@ export type Media = {
   id: string;
   type: "IMAGE" | "VIDEO";
   url: string;
-  size: number;
+  size: number | null;
   order: number;
 };
 
@@ -45,21 +51,25 @@ export type Author = {
   email?: string;
 };
 
+// post.ts
 export type Post = {
   id: string;
   text: string | null;
   privacy: Privacy;
+
   author: Author;
   media: Media[];
-  aiStatus: "APPROVED" | "REJECTED" | "PENDING";
+
+  aiStatus: "OK" | "PENDING" | "REJECTED";
   aiReason?: string;
 
   createdAt: Date;
 
-  // ===== ADMIN FIELDS =====
+
+  comments: Comment[];
+
   hiddenAt?: Date | null;
   deletedAt?: Date | null;
 
-  // ===== SHARE =====
-  sharedFrom?: Post;
+  sharedFrom?: Post | null;
 };
