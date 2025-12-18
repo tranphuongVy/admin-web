@@ -61,6 +61,7 @@ import UserListPage from "../features/users/UserListPage";
 import PostListPage from "../features/posts/PostListPage";
 import CommentListPage from "../features/comments/CommentListPage";
 import AnnouncementPage from "../features/announcements/AnnouncementPage";
+import StatisticsPage from "../features/stas/stas";
 
 import AdminRoute from "./AdminRoute";
 import AdminLayout from "../layouts/AdminLayout";
@@ -85,6 +86,7 @@ export default function AppRoutes() {
           <Route path="/posts" element={<PostListPage />} />
           <Route path="/comments" element={<CommentListPage />} />
           <Route path="/announcements" element={<AnnouncementPage />} />
+          <Route path="/statistics" element={<StatisticsPage />} />
         </Route>
 
         {/* ===== 404 ===== */}
