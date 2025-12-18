@@ -22,6 +22,7 @@ export type Comment = {
   aiReason: string;
   createdAt: Date;
   updatedAt: Date;
+  hiddenAt?: Date | null;
   deletedAt: Date | null;
   author: CommentAuthor;
   post: CommentPost;
@@ -48,6 +49,7 @@ export type CommentApiResponse = {
     id: string;
     text: string | null;
     privacy: "PUBLIC" | "FRIENDS" | "PRIVATE";
+    hiddenAt?: Date | null;
     deletedAt: string | null;
   };
 };
