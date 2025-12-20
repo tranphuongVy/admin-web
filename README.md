@@ -49,13 +49,27 @@ Admin Web Dashboard là ứng dụng web quản trị được xây dựng nhằ
 src/
 ├── api/
 
-├── pages/
+├── assets/
 
-├── api/
+├── components/
 
-├── App.jsx
-├── main.jsx
-└── ...
+├── features/
+
+├── layouts/
+
+├── routes/
+
+├── store/
+
+├── types/
+
+├── utils/
+
+├── App.css
+
+├── index.css
+
+└── main.jsx
 
 **⚙️ Cài đặt & chạy dự án**
 
