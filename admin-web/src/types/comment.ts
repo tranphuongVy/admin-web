@@ -10,6 +10,7 @@ export type CommentPost = {
   text: string | null;
   privacy: "PUBLIC" | "FRIENDS" | "PRIVATE";
   deletedAt: Date | null;
+  hiddenAt: Date | null;
 };
 
 export type Comment = {
