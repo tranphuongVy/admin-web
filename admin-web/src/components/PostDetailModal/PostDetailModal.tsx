@@ -172,7 +172,7 @@ import { mapPost } from "../../types/mappers/post.mapper";
 import "./PostDetailModal.css";
 
 // ===========================
-// LOCAL TYPES (UI ONLY)
+// COMMENT TYPE (MATCH BACKEND)
 // ===========================
 interface CommentAuthor {
   name: string;
@@ -184,10 +184,8 @@ interface Comment {
   createdAt: Date;
   author: CommentAuthor;
 
-  // optional flags from backend
-  isHidden?: boolean;
-  isDeleted?: boolean;
-  status?: "ACTIVE" | "HIDDEN" | "DELETED";
+  deletedAt: Date | null;
+  hiddenAt: Date | null;
 }
 
 interface Props {
@@ -242,18 +240,15 @@ export default function PostDetailModal({
   // ===========================
   // FILTER VISIBLE COMMENTS
   // ===========================
-  const visibleComments: Comment[] = useMemo(() => {
+  const visibleComments = useMemo<Comment[]>(() => {
     if (!post) return [];
 
     return (post.comments as Comment[]).filter((c) => {
       // deleted
-      if (c.isDeleted) return false;
+      if (c.deletedAt) return false;
 
       // hidden
-      if (c.isHidden) return false;
-
-      // status-based
-      if (c.status && c.status !== "ACTIVE") return false;
+      if (c.hiddenAt) return false;
 
       // empty content
       if (!c.content || c.content.trim() === "") return false;
@@ -326,9 +321,7 @@ export default function PostDetailModal({
 
               {/* ===== COMMENTS ===== */}
               <div className="comments">
-                <h4>
-                  Comments ({visibleComments.length})
-                </h4>
+                <h4>Comments ({visibleComments.length})</h4>
 
                 {visibleComments.length === 0 ? (
                   <p className="empty">No comments</p>
@@ -341,9 +334,7 @@ export default function PostDetailModal({
                           {c.createdAt.toLocaleString()}
                         </span>
                       </div>
-                      <p className="comment-content">
-                        {c.content}
-                      </p>
+                      <p className="comment-content">{c.content}</p>
                     </div>
                   ))
                 )}
