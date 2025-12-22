@@ -1,4 +1,4 @@
-// import { useEffect, useState } from "react";
+// import { useEffect, useMemo, useState } from "react";
 // import Button from "../Button/Button";
 
 // import type { Post } from "../../types/post";
@@ -6,6 +6,23 @@
 // import { mapPost } from "../../types/mappers/post.mapper";
 
 // import "./PostDetailModal.css";
+
+// // ===========================
+// // COMMENT TYPE (MATCH BACKEND)
+// // ===========================
+// interface CommentAuthor {
+//   name: string;
+// }
+
+// interface Comment {
+//   id: string;
+//   content: string;
+//   createdAt: Date;
+//   author: CommentAuthor;
+
+//   deletedAt: Date | null;
+//   hiddenAt: Date | null;
+// }
 
 // interface Props {
 //   open: boolean;
@@ -22,6 +39,9 @@
 //   const [loading, setLoading] = useState(false);
 //   const [error, setError] = useState<string | null>(null);
 
+//   // ===========================
+//   // FETCH POST DETAIL
+//   // ===========================
 //   useEffect(() => {
 //     if (!open || !postId) {
 //       setPost(null);
@@ -53,6 +73,26 @@
 //     };
 //   }, [open, postId]);
 
+//   // ===========================
+//   // FILTER VISIBLE COMMENTS
+//   // ===========================
+//   const visibleComments = useMemo<Comment[]>(() => {
+//     if (!post) return [];
+
+//     return (post.comments as Comment[]).filter((c) => {
+//       // deleted
+//       if (c.deletedAt) return false;
+
+//       // hidden
+//       if (c.hiddenAt) return false;
+
+//       // empty content
+//       if (!c.content || c.content.trim() === "") return false;
+
+//       return true;
+//     });
+//   }, [post]);
+
 //   if (!open) return null;
 
 //   return (
@@ -77,9 +117,7 @@
 //               <div className="post-info">
 //                 <div className="post-header">
 //                   <strong>{post.author.name}</strong>
-//                   <span className="privacy">
-//                     {post.privacy}
-//                   </span>
+//                   <span className="privacy">{post.privacy}</span>
 //                 </div>
 
 //                 {post.text && (
@@ -119,14 +157,12 @@
 
 //               {/* ===== COMMENTS ===== */}
 //               <div className="comments">
-//                 <h4>
-//                   Comments ({post.comments.length})
-//                 </h4>
+//                 <h4>Comments ({visibleComments.length})</h4>
 
-//                 {post.comments.length === 0 ? (
+//                 {visibleComments.length === 0 ? (
 //                   <p className="empty">No comments</p>
 //                 ) : (
-//                   post.comments.map((c) => (
+//                   visibleComments.map((c) => (
 //                     <div className="comment" key={c.id}>
 //                       <div className="comment-header">
 //                         <strong>{c.author.name}</strong>
@@ -134,9 +170,7 @@
 //                           {c.createdAt.toLocaleString()}
 //                         </span>
 //                       </div>
-//                       <p className="comment-content">
-//                         {c.content}
-//                       </p>
+//                       <p className="comment-content">{c.content}</p>
 //                     </div>
 //                   ))
 //                 )}
@@ -183,7 +217,6 @@ interface Comment {
   content: string;
   createdAt: Date;
   author: CommentAuthor;
-
   deletedAt: Date | null;
   hiddenAt: Date | null;
 }
@@ -202,6 +235,29 @@ export default function PostDetailModal({
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ===========================
+  // LIGHTBOX STATE
+  // ===========================
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setCurrentImageIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const nextImage = () => {
+    if (!post) return;
+    setCurrentImageIndex((i) => (i + 1) % post.media.length);
+  };
+
+  const prevImage = () => {
+    if (!post) return;
+    setCurrentImageIndex(
+      (i) => (i - 1 + post.media.length) % post.media.length
+    );
+  };
 
   // ===========================
   // FETCH POST DETAIL
@@ -244,15 +300,9 @@ export default function PostDetailModal({
     if (!post) return [];
 
     return (post.comments as Comment[]).filter((c) => {
-      // deleted
       if (c.deletedAt) return false;
-
-      // hidden
       if (c.hiddenAt) return false;
-
-      // empty content
       if (!c.content || c.content.trim() === "") return false;
-
       return true;
     });
   }, [post]);
@@ -270,10 +320,7 @@ export default function PostDetailModal({
         {/* ===== BODY ===== */}
         <div className="modal-body">
           {loading && <p className="empty">Loading...</p>}
-
-          {!loading && error && (
-            <p className="empty error">{error}</p>
-          )}
+          {!loading && error && <p className="empty error">{error}</p>}
 
           {!loading && post && (
             <>
@@ -284,22 +331,21 @@ export default function PostDetailModal({
                   <span className="privacy">{post.privacy}</span>
                 </div>
 
-                {post.text && (
-                  <p className="text">{post.text}</p>
-                )}
+                {post.text && <p className="text">{post.text}</p>}
 
                 {post.media.length > 0 && (
                   <div className="post-media">
                     {post.media
                       .slice()
                       .sort((a, b) => a.order - b.order)
-                      .map((m) =>
+                      .map((m, index) =>
                         m.type === "IMAGE" ? (
                           <img
                             key={m.id}
                             src={m.url}
                             alt=""
                             className="post-image"
+                            onClick={() => openLightbox(index)}
                           />
                         ) : (
                           <video
@@ -314,15 +360,12 @@ export default function PostDetailModal({
                   </div>
                 )}
 
-                <span className="time">
-                  {post.createdAt.toLocaleString()}
-                </span>
+                <span className="time">{post.createdAt.toLocaleString()}</span>
               </div>
 
               {/* ===== COMMENTS ===== */}
               <div className="comments">
                 <h4>Comments ({visibleComments.length})</h4>
-
                 {visibleComments.length === 0 ? (
                   <p className="empty">No comments</p>
                 ) : (
@@ -342,6 +385,34 @@ export default function PostDetailModal({
             </>
           )}
         </div>
+
+        {/* ===== LIGHTBOX ===== */}
+        {lightboxOpen && post && post.media[currentImageIndex] && (
+          <div
+            className="lightbox-backdrop"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <div className="lightbox" onClick={(e) => e.stopPropagation()}>
+              <button className="prev" onClick={prevImage}>
+                ‹
+              </button>
+              <img
+                src={post.media[currentImageIndex].url}
+                alt=""
+                className="lightbox-image"
+              />
+              <button className="next" onClick={nextImage}>
+                ›
+              </button>
+              <button
+                className="close-lightbox"
+                onClick={() => setLightboxOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ===== FOOTER ===== */}
         <div className="actions">
