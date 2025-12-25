@@ -27,6 +27,9 @@ export function mapComment(api: CommentApiResponse): Comment {
       id: api.post?.id ?? api.postId,
       text: api.post?.text ?? null,
       privacy: api.post?.privacy ?? "PUBLIC",
+      hiddenAt: api.post?.hiddenAt
+        ? new Date(api.post.hiddenAt)
+        : null,
       deletedAt: api.post?.deletedAt
         ? new Date(api.post.deletedAt)
         : null,

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
-import Table from "../../components/Table/Table";
+import { useEffect, useState } from "react";
+import { adminApi } from "../../api/admin.api";
 import Button from "../../components/Button/Button";
 import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
+import Table from "../../components/Table/Table";
 import UserDetailModal from "../../components/UserDetailModal/UserDetailModal";
 import type { User } from "../../types/user";
-import { adminApi } from "../../api/admin.api";
 import "./UserListPage.css";
 
 type FilterType = "all" | "active" | "banned";
@@ -13,172 +13,186 @@ type FilterType = "all" | "active" | "banned";
 const PAGE_SIZE = 6;
 
 export default function UserListPage() {
-  const [usersData, setUsersData] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
+    const [usersData, setUsersData] = useState<User[]>([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
 
-  const [selected, setSelected] = useState<User | null>(null);
-  const [detailUser, setDetailUser] = useState<User | null>(null);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [page, setPage] = useState(1);
+    const [selected, setSelected] = useState<User | null>(null);
+    const [detailUser, setDetailUser] = useState<User | null>(null);
+    const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState<FilterType>("all");
+    const [page, setPage] = useState(1);
 
-  const fetchUsers = async () => {
-    const token = localStorage.getItem("adminAccessToken");
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
+    const fetchUsers = async () => {
+        const token = localStorage.getItem("adminAccessToken");
+        if (!token) {
+            window.location.href = "/login";
+            return;
+        }
 
-    setLoading(true);
-    try {
-      const { items, total } = await adminApi.listUsers({
-  page,
-  limit: PAGE_SIZE,
-  search: search || undefined,
-  isBanned:
-    filter === "all"
-      ? undefined
-      : filter === "banned"
-      ? true
-      : false,
-});
-      setUsersData(items);
-      setTotal(total);
-    } catch (err) {
-      console.error("Fetch users error:", err);
-      // Nếu fetch lỗi 401 do token hết hạn mà refresh cũng fail, axiosAdmin sẽ auto redirect
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
+        try {
+            const { items, total } = await adminApi.listUsers({
+                page,
+                limit: PAGE_SIZE,
+                search: search || undefined,
+                isBanned:
+                    filter === "all"
+                        ? undefined
+                        : filter === "banned"
+                        ? true
+                        : false,
+            });
+            setUsersData(items);
+            setTotal(total);
+        } catch (err) {
+            console.error("Fetch users error:", err);
+            // Nếu fetch lỗi 401 do token hết hạn mà refresh cũng fail, axiosAdmin sẽ auto redirect
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [search, filter, page]);
+    useEffect(() => {
+        fetchUsers();
+    }, [search, filter, page]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+    const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(1);
-  };
+    const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+        setPage(1);
+    };
 
-  const handleFilter = (e: ChangeEvent<HTMLSelectElement>) => {
-    setFilter(e.target.value as FilterType);
-    setPage(1);
-  };
+    const handleFilter = (e: ChangeEvent<HTMLSelectElement>) => {
+        setFilter(e.target.value as FilterType);
+        setPage(1);
+    };
 
-  const handleConfirmBan = async () => {
-    if (!selected) return;
-    try {
-      if (selected.isBanned) await adminApi.unbanUser(selected.id);
-      else await adminApi.banUser(selected.id);
+    const handleConfirmBan = async () => {
+        if (!selected) return;
+        try {
+            if (selected.isBanned) await adminApi.unbanUser(selected.id);
+            else await adminApi.banUser(selected.id);
 
-      setSelected(null);
-      setDetailUser(null);
-      fetchUsers();
-    } catch (err) {
-      console.error("Ban/Unban error:", err);
-    }
-  };
+            setSelected(null);
+            setDetailUser(null);
+            fetchUsers();
+        } catch (err) {
+            console.error("Ban/Unban error:", err);
+        }
+    };
 
-  const columns = [
-    {
-      key: "email" as const,
-      title: "Email",
-      render: (u: User) => (
-        <button className="link" onClick={() => setDetailUser(u)}>
-          {u.email}
-        </button>
-      ),
-    },
-    {
-      key: "isBanned" as const,
-      title: "Status",
-      render: (u: User) => (
-        <span className={u.isBanned ? "status-banned" : "status-active"}>
-          {u.isBanned ? "BANNED" : "ACTIVE"}
-        </span>
-      ),
-    },
-    {
-      key: "id" as const,
-      title: "Action",
-      render: (u: User) => (
-        <Button
-          variant={u.isBanned ? "primary" : "danger"}
-          onClick={() => setSelected(u)}
-        >
-          {u.isBanned ? "Unban" : "Ban"}
-        </Button>
-      ),
-    },
-  ];
+    const columns = [
+        {
+            key: "email" as const,
+            title: "Email",
+            render: (u: User) => (
+                <button className="link" onClick={() => setDetailUser(u)}>
+                    {u.email}
+                </button>
+            ),
+        },
+        {
+            key: "isBanned" as const,
+            title: "Status",
+            render: (u: User) => (
+                <span
+                    className={u.isBanned ? "status-banned" : "status-active"}
+                >
+                    {u.isBanned ? "BANNED" : "ACTIVE"}
+                </span>
+            ),
+        },
+        {
+            key: "id" as const,
+            title: "Action",
+            render: (u: User) => (
+                <Button
+                    variant={u.isBanned ? "primary" : "danger"}
+                    onClick={() => setSelected(u)}
+                >
+                    {u.isBanned ? "Unban" : "Ban"}
+                </Button>
+            ),
+        },
+    ];
 
-  return (
-    <div className="page">
-      <div className="page-header"><h2>Users</h2></div>
+    return (
+        <div className="page">
+            <div className="page-header">
+                <h2>Users</h2>
+            </div>
 
-      <div className="toolbar">
-        <input
-          className="search"
-          placeholder="Search by email..."
-          value={search}
-          onChange={handleSearch}
-        />
-        <select
-          title="filter"
-          className="filter"
-          value={filter}
-          onChange={handleFilter}
-        >
-          <option value="all">All users</option>
-          <option value="active">Active</option>
-          <option value="banned">Banned</option>
-        </select>
-      </div>
+            <div className="toolbar">
+                <input
+                    className="search"
+                    placeholder="Search by email..."
+                    value={search}
+                    onChange={handleSearch}
+                />
+                <select
+                    title="filter"
+                    className="filter"
+                    value={filter}
+                    onChange={handleFilter}
+                >
+                    <option value="all">All users</option>
+                    <option value="active">Active</option>
+                    <option value="banned">Banned</option>
+                </select>
+            </div>
 
-      <Table<User> columns={columns} data={usersData} loading={loading} />
+            <Table<User> columns={columns} data={usersData} loading={loading} />
 
-      <div className="pagination">
-        <Button
-          variant="ghost"
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-        >
-          Prev
-        </Button>
-        <span className="page-info">Page {page} / {totalPages || 1}</span>
-        <Button
-          variant="ghost"
-          disabled={page === totalPages || totalPages === 0}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </Button>
-      </div>
+            <div className="pagination">
+                <Button
+                    variant="ghost"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                >
+                    Prev
+                </Button>
+                <span className="page-info">
+                    Page {page} / {totalPages || 1}
+                </span>
+                <Button
+                    variant="ghost"
+                    disabled={page === totalPages || totalPages === 0}
+                    onClick={() => setPage((p) => p + 1)}
+                >
+                    Next
+                </Button>
+            </div>
 
-      <ConfirmDialog
-        open={!!selected}
-        title="Confirm action"
-        message={selected ? `Are you sure you want to ${selected.isBanned ? "unban" : "ban"} this user?` : ""}
-        onCancel={() => setSelected(null)}
-        onConfirm={handleConfirmBan}
-      />
+            <ConfirmDialog
+                open={!!selected}
+                title="Confirm action"
+                message={
+                    selected
+                        ? `Are you sure you want to ${
+                              selected.isBanned ? "unban" : "ban"
+                          } this user?`
+                        : ""
+                }
+                onCancel={() => setSelected(null)}
+                onConfirm={handleConfirmBan}
+            />
 
-      {detailUser && (
-        <UserDetailModal
-  open={!!detailUser}
-  user={detailUser}
-  onClose={() => setDetailUser(null)}
-  onToggleBan={(u) => setSelected(u)}
-  onResetPassword={async (userId, newPassword) => {
-    await adminApi.resetUserPassword(userId, newPassword);
-  }}
-/>
-
-      )}
-    </div>
-  );
+            {detailUser && (
+                <UserDetailModal
+                    open={!!detailUser}
+                    user={detailUser}
+                    onClose={() => setDetailUser(null)}
+                    onToggleBan={(u) => setSelected(u)}
+                    onResetPassword={async (
+                        userId: string,
+                        newPassword: string
+                    ) => {
+                        await adminApi.resetUserPassword(userId, newPassword);
+                    }}
+                />
+            )}
+        </div>
+    );
 }

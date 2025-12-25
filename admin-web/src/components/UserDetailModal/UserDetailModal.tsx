@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Button from "../Button/Button";
 import "./UserDetailModal.css";
 import type { User } from "../../types/user";
@@ -7,6 +8,10 @@ interface Props {
   user: User | null;
   onClose: () => void;
   onToggleBan: (user: User) => void;
+  onResetPassword: (
+    userId: string,
+    newPassword: string
+  ) => Promise<void>;
 }
 
 export default function UserDetailModal({
@@ -14,8 +19,27 @@ export default function UserDetailModal({
   user,
   onClose,
   onToggleBan,
+  onResetPassword,
 }: Props) {
+  const [newPassword, setNewPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
+
   if (!open || !user) return null;
+
+  const handleResetPassword = async () => {
+    const trimmed = newPassword.trim();
+    if (!trimmed) return;
+
+    try {
+      setResetting(true);
+      await onResetPassword(user.id, trimmed);
+      setNewPassword("");
+    } catch (err) {
+      console.error("Reset password failed:", err);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <div className="modal-backdrop">
@@ -79,6 +103,28 @@ export default function UserDetailModal({
             <p>{user.bio}</p>
           </div>
         )}
+
+        {/* ===== Reset Password ===== */}
+        <div className="reset-password">
+          <label htmlFor="new-password">Reset password</label>
+          <input
+            id="new-password"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Enter new password"
+            disabled={resetting}
+          />
+          <div className="reset-actions">
+            <Button
+              variant="primary"
+              onClick={handleResetPassword}
+              disabled={resetting || newPassword.trim() === ""}
+            >
+              {resetting ? "Resetting..." : "Reset password"}
+            </Button>
+          </div>
+        </div>
 
         {/* ===== Actions ===== */}
         <div className="actions">
