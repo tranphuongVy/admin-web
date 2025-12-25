@@ -268,7 +268,7 @@ import { adminApi } from "../../api/admin.api";
 
 import "./CommentListPage.css";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 3;
 
 export default function CommentListPage() {
   /* ================= STATE ================= */
@@ -292,48 +292,26 @@ export default function CommentListPage() {
       const res = await adminApi.listComments({
         page,
         limit: PAGE_SIZE,
+        search: search || undefined,
         includeHidden,
         includeDeleted,
       });
 
       let items: Comment[] = res.items;
 
-      /* ===== SAFETY FILTER (frontend) ===== */
-      if (!includeDeleted) {
-        items = items.filter((c) => !c.deletedAt);
-      }
-
-      if (!includeHidden) {
-        items = items.filter((c) => !c.hiddenAt);
-      }
-
-      /* ===== SEARCH ===== */
-      if (search.trim()) {
-        const keyword = search.toLowerCase();
-        items = items.filter(
-          (c) =>
-            c.content.toLowerCase().includes(keyword) ||
-            c.author.name.toLowerCase().includes(keyword)
-        );
-      }
-
-      /* ===== DATE RANGE ===== */
+      /* ===== DATE RANGE (frontend only) ===== */
       if (fromDate) {
         const from = new Date(fromDate).getTime();
-        items = items.filter(
-          (c) => c.createdAt.getTime() >= from
-        );
+        items = items.filter((c) => c.createdAt.getTime() >= from);
       }
 
       if (toDate) {
         const to = new Date(`${toDate}T23:59:59`).getTime();
-        items = items.filter(
-          (c) => c.createdAt.getTime() <= to
-        );
+        items = items.filter((c) => c.createdAt.getTime() <= to);
       }
 
       setComments(items);
-      setTotal(items.length);
+      setTotal(res.total);
     } catch (err) {
       console.error("Fetch comments failed", err);
     }
@@ -395,10 +373,6 @@ export default function CommentListPage() {
             <span className="badge badge-deleted">Post deleted</span>
           )}
         </div>
-
-        <small className="post-id">
-          ID: {c.post?.id}
-        </small>
       </div>
     ),
   },

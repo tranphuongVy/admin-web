@@ -66,25 +66,32 @@
 //   button: { width: "100%", padding: 10, borderRadius: 4, border: "none", background: "#1677ff", color: "#fff", cursor: "pointer" },
 // };
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { authApiClient } from "../../api/auth.api";
 import axios from "axios";
 import { FiMail, FiLock } from "react-icons/fi";
+import { storage } from "../../utils/storage";
 import "./AdminLoginPage.css";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (loading) return;
+
     try {
+      setLoading(true);
       const res = await authApiClient.login(email, password);
       const { accessToken, refreshToken, user } = res.data.data;
 
-      localStorage.setItem("adminAccessToken", accessToken);
-      localStorage.setItem("adminRefreshToken", refreshToken);
+      storage.setAccessToken(accessToken);
+      storage.setRefreshToken(refreshToken);
 
       if (user.role !== "ADMIN") {
         alert("Không có quyền admin");
@@ -98,6 +105,8 @@ export default function AdminLoginPage() {
       } else {
         alert("Đăng nhập thất bại");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,31 +117,37 @@ export default function AdminLoginPage() {
         <h2 className="login-title">Admin Panel</h2>
         <p className="login-subtitle">Sign in to continue</p>
 
-        <div className="input-group">
-          <FiMail className="input-icon" />
-          <input
-            type="email"
-            className="login-input"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+        <form className="login-form" onSubmit={handleLogin}>
+          <div className="input-group">
+            <FiMail className="input-icon" />
+            <input
+              type="email"
+              className="login-input"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="username"
+            />
+          </div>
 
-        <div className="input-group">
-          <FiLock className="input-icon" />
-          <input
-            type="password"
-            className="login-input"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+          <div className="input-group">
+            <FiLock className="input-icon" />
+            <input
+              type="password"
+              className="login-input"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-        <button className="login-button" onClick={handleLogin}>
-          Sign In
-        </button>
+          <button className="login-button" type="submit" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
       </div>
     </div>
   );

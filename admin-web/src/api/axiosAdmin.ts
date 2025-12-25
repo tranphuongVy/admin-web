@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosError } from "axios";
 import { authApiClient } from "./auth.api";
+import { storage } from "../utils/storage";
 
 const axiosAdmin: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL, // ví dụ: http://localhost:3000/api
@@ -16,7 +17,7 @@ const processQueue = (token?: string) => {
 // attach token trước khi request
 axiosAdmin.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("adminAccessToken");
+    const token = storage.getAccessToken();
     if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
@@ -33,10 +34,10 @@ axiosAdmin.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("adminRefreshToken");
+      const refreshToken = storage.getRefreshToken();
       if (!refreshToken) {
-        localStorage.clear();
-        window.location.href = "/admin/login";
+        storage.clearAdmin();
+        window.location.href = "/login";
         return Promise.reject(error);
       }
 
@@ -52,10 +53,11 @@ axiosAdmin.interceptors.response.use(
       isRefreshing = true;
       try {
         const res = await authApiClient.refresh(refreshToken);
-const { accessToken, refreshToken: newRefreshToken } = res.data.data;
+        const { accessToken, refreshToken: newRefreshToken } =
+          res.data.data;
 
-        localStorage.setItem("adminAccessToken", accessToken);
-        localStorage.setItem("adminRefreshToken", newRefreshToken);
+        storage.setAccessToken(accessToken);
+        storage.setRefreshToken(newRefreshToken);
 
         if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         processQueue(accessToken);
@@ -63,8 +65,8 @@ const { accessToken, refreshToken: newRefreshToken } = res.data.data;
         return axiosAdmin(originalRequest);
       } catch (err) {
         processQueue();
-        localStorage.clear();
-        window.location.href = "/admin/login";
+        storage.clearAdmin();
+        window.location.href = "/login";
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

@@ -11,6 +11,7 @@ import {
 
 import { adminApi } from "../../api/admin.api";
 import type { PasswordResetRequest } from "../../types/passwordResetRequest";
+import { storage } from "../../utils/storage";
 import "./Sidebar.css";
 
 export default function Sidebar() {
@@ -112,7 +113,7 @@ export default function Sidebar() {
         <button
           className="logout-btn"
           onClick={() => {
-            localStorage.removeItem("adminAccessToken");
+            storage.clearAdmin();
             navigate("/login");
           }}
         >

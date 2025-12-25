@@ -6,11 +6,12 @@ import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 import Table from "../../components/Table/Table";
 import UserDetailModal from "../../components/UserDetailModal/UserDetailModal";
 import type { User } from "../../types/user";
+import { storage } from "../../utils/storage";
 import "./UserListPage.css";
 
 type FilterType = "all" | "active" | "banned";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 4;
 
 export default function UserListPage() {
     const [usersData, setUsersData] = useState<User[]>([]);
@@ -24,7 +25,7 @@ export default function UserListPage() {
     const [page, setPage] = useState(1);
 
     const fetchUsers = async () => {
-        const token = localStorage.getItem("adminAccessToken");
+        const token = storage.getAccessToken();
         if (!token) {
             window.location.href = "/login";
             return;
